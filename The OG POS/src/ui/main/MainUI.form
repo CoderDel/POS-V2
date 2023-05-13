@@ -595,9 +595,9 @@
                                   <Component id="jScrollPane1" min="-2" pref="590" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jButton3" pref="184" max="32767" attributes="0"/>
-                                      <Component id="jButton4" max="32767" attributes="0"/>
-                                      <Component id="jButton5" alignment="0" max="32767" attributes="0"/>
+                                      <Component id="deleteItemBtn" pref="184" max="32767" attributes="0"/>
+                                      <Component id="updateItemBtn" max="32767" attributes="0"/>
+                                      <Component id="addItemBtn" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -612,11 +612,11 @@
                           <Group type="103" groupAlignment="1" attributes="0">
                               <Group type="102" attributes="0">
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  <Component id="jButton5" linkSize="6" min="-2" max="-2" attributes="0"/>
+                                  <Component id="addItemBtn" linkSize="6" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jButton4" linkSize="6" min="-2" max="-2" attributes="0"/>
+                                  <Component id="updateItemBtn" linkSize="6" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jButton3" linkSize="6" min="-2" pref="35" max="-2" attributes="0"/>
+                                  <Component id="deleteItemBtn" linkSize="6" min="-2" pref="35" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
@@ -648,7 +648,7 @@
 
                   <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                   <SubComponents>
-                    <Component class="javax.swing.JTable" name="jTable1">
+                    <Component class="javax.swing.JTable" name="itemTable">
                       <Properties>
                         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                           <Color blue="42" green="42" red="42" type="rgb"/>
@@ -658,9 +658,9 @@
                         </Property>
                         <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
                           <Table columnCount="3" rowCount="0">
-                            <Column editable="true" title="Food Type" type="java.lang.String"/>
-                            <Column editable="true" title="Food Name" type="java.lang.String"/>
-                            <Column editable="true" title="Price" type="java.lang.Float"/>
+                            <Column editable="false" title="Food Type" type="java.lang.String"/>
+                            <Column editable="false" title="Food Name" type="java.lang.String"/>
+                            <Column editable="false" title="Price" type="java.lang.Float"/>
                           </Table>
                         </Property>
                         <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
@@ -695,20 +695,29 @@
                     </Component>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JButton" name="jButton3">
+                <Component class="javax.swing.JButton" name="deleteItemBtn">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Delete Item"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteItemBtnActionPerformed"/>
+                  </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton4">
+                <Component class="javax.swing.JButton" name="updateItemBtn">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Edit Item"/>
+                    <Property name="text" type="java.lang.String" value="Update Item"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="updateItemBtnActionPerformed"/>
+                  </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton5">
+                <Component class="javax.swing.JButton" name="addItemBtn">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Add Item"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addItemBtnActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

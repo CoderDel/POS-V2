@@ -1,17 +1,160 @@
 package ui.main;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import java.awt.Dimension;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Vector;
+import java.sql.*;
+import java.util.ArrayList;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.table.DefaultTableModel;
+import pos.ui.popup.ItemEditorUI;
+import ui.custom.ItemUI;
 
 public class MainUI extends javax.swing.JFrame {
+    
+    ArrayList<ItemUI> foodItems;
+    DefaultTableModel tableModel;
+    
+    //objects use for connecting and interacting with the DataBase
+    Connection con;
+    PreparedStatement ps;
+    ResultSet rs;
 
     public MainUI() {
         initComponents();
+        
+        tableModel = (DefaultTableModel) itemTable.getModel();
+        foodItems = new ArrayList();
+        
+        connect(); 
+        fetchData(); //loads all data to the table
+
+        addItemToMenuContainer();
+        
+        
+//        ItemUI item = new ItemUI("Wendel", 90.0f, "Drink");
+//        item.setBounds(0, 0, item.getPreferredSize().width, item.getPreferredSize().height);
+//        menuItemContainer.add(item);
+        
+    }
+    
+    //app to database methods
+    private void connect() {
+        //intialzing to connect to the database
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Driver Loaded Successfully in MainUI");
+            
+            con = DriverManager.getConnection("jdbc:mysql://localhost/foodterria", "root", "");
+            
+        } catch (ClassNotFoundException | SQLException e) {
+            Logger.getLogger(MainUI.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
+    
+    private void fetchData() {
+        //getting all the data from database to the table
+        try {
+            ps = con.prepareStatement("SELECT * FROM food_items");  //prepares a statement that retrieves all row and columns of the table in database
+            rs = ps.executeQuery(); // i execute and statement ug ibutang sa (rs) na object and data nga nakuha sa database
+            ResultSetMetaData rss = rs.getMetaData(); //kuhaon niya ang metadata sa (rs) (para ma access lang nimo ang column sa database table mao ra)
+            int columnIndex = rss.getColumnCount();
+            
+            tableModel.setRowCount(0); //i set and itemTable na row to 0
+
+            //i access niya ang table sa database ug ibutang niya tanan ang data sa itemTable (kanang makita sa atong system na table)
+            while(rs.next()) {
+                Vector v = new Vector();
+                for(int i=0; i<columnIndex; i++) {
+                    v.add(rs.getString("foodType"));
+                    v.add(rs.getString("foodName"));
+                    v.add(rs.getFloat("price"));
+                }
+                
+                tableModel.addRow(v);
+            }
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(MainUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
+    private void deleteData() {
+        try {
+            ps = con.prepareStatement("DELETE FROM food_items WHERE id = ?");
+
+            ps.setInt(1, itemTable.getSelectedRow() + 1);
+            
+            System.out.println("Item Deleted: "+ itemTable.getSelectedRow() + 1);
+            
+            ps.executeUpdate();
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(MainUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    ///////////////////// DONT MIND THIS    ///////////////////////
+    //ui methods
+    private final int defaultMenuHeight = 432;
+    private int posY = 0;
+    private final int gap = 5;
+    
+    //mag add syag item sa menu scrollpane
+    private void addItemToMenuContainer() {
+        for(int i=0; i<itemTable.getRowCount(); i++) {
+            ItemUI item = new ItemUI(
+                    (String) tableModel.getValueAt(i, 0),
+                    (String) tableModel.getValueAt(i, 1),
+                    (float) tableModel.getValueAt(i, 2)
+            );
+            
+            foodItems.add(item); //ibutang ang item sa foodItem array para gamiton later
+            
+            item.setBounds(0, posY, item.getPreferredSize().width, item.getPreferredSize().height);
+            
+            if(this.getRowHeight() > menuItemContainer.getPreferredSize().height) {
+                menuItemContainer.setPreferredSize(new Dimension(
+                        menuItemContainer.getPreferredSize().width,
+                        menuItemContainer.getPreferredSize().height + item.getPreferredSize().height + 1
+                ));
+                
+                menuItemContainer.add(item);
+            }
+            else {
+                menuItemContainer.add(item);
+            }
+
+            posY += item.getPreferredSize().height + gap;
+        }
+    }
+    
+    private int getRowHeight() {
+        int height = 0;
+        
+        for(int i=0; i<foodItems.size(); i++) 
+            height += foodItems.get(i).getPreferredSize().height;
+            
+        return height;
+    }
+    
+    //i-update and menu
+    public void updateMenu() {
+        menuItemContainer.removeAll(); //tangalon tanan menu sa container
+        menuItemContainer.setPreferredSize(new Dimension(menuItemContainer.getPreferredSize().width, defaultMenuHeight));
+        posY = 0; //back to zero ang position
+        
+        addItemToMenuContainer(); // i readd tanan items sa menu
+    }
+    
+    
+    
+    ///////////////////// DONT MIND THIS    ///////////////////////
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -51,10 +194,10 @@ public class MainUI extends javax.swing.JFrame {
         itemContainerPanel = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
+        itemTable = new javax.swing.JTable();
+        deleteItemBtn = new javax.swing.JButton();
+        updateItemBtn = new javax.swing.JButton();
+        addItemBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("FoodTerria | Main");
@@ -342,9 +485,9 @@ public class MainUI extends javax.swing.JFrame {
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
         jLabel5.setText("ITEM TABLE");
 
-        jTable1.setBackground(new java.awt.Color(66, 66, 66));
-        jTable1.setForeground(new java.awt.Color(255, 255, 255));
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        itemTable.setBackground(new java.awt.Color(66, 66, 66));
+        itemTable.setForeground(new java.awt.Color(255, 255, 255));
+        itemTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -355,28 +498,50 @@ public class MainUI extends javax.swing.JFrame {
             Class[] types = new Class [] {
                 java.lang.String.class, java.lang.String.class, java.lang.Float.class
             };
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
         });
-        jTable1.setGridColor(new java.awt.Color(255, 255, 255));
-        jTable1.setShowGrid(false);
-        jTable1.setShowHorizontalLines(true);
-        jTable1.setShowVerticalLines(true);
-        jTable1.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(jTable1);
-        if (jTable1.getColumnModel().getColumnCount() > 0) {
-            jTable1.getColumnModel().getColumn(0).setResizable(false);
-            jTable1.getColumnModel().getColumn(1).setResizable(false);
-            jTable1.getColumnModel().getColumn(2).setResizable(false);
+        itemTable.setGridColor(new java.awt.Color(255, 255, 255));
+        itemTable.setShowGrid(false);
+        itemTable.setShowHorizontalLines(true);
+        itemTable.setShowVerticalLines(true);
+        itemTable.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(itemTable);
+        if (itemTable.getColumnModel().getColumnCount() > 0) {
+            itemTable.getColumnModel().getColumn(0).setResizable(false);
+            itemTable.getColumnModel().getColumn(1).setResizable(false);
+            itemTable.getColumnModel().getColumn(2).setResizable(false);
         }
 
-        jButton3.setText("Delete Item");
+        deleteItemBtn.setText("Delete Item");
+        deleteItemBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteItemBtnActionPerformed(evt);
+            }
+        });
 
-        jButton4.setText("Edit Item");
+        updateItemBtn.setText("Update Item");
+        updateItemBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateItemBtnActionPerformed(evt);
+            }
+        });
 
-        jButton5.setText("Add Item");
+        addItemBtn.setText("Add Item");
+        addItemBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addItemBtnActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout itemContainerPanelLayout = new javax.swing.GroupLayout(itemContainerPanel);
         itemContainerPanel.setLayout(itemContainerPanelLayout);
@@ -392,9 +557,9 @@ public class MainUI extends javax.swing.JFrame {
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 590, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(itemContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(deleteItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                            .addComponent(updateItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(addItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         itemContainerPanelLayout.setVerticalGroup(
@@ -404,11 +569,11 @@ public class MainUI extends javax.swing.JFrame {
                 .addGroup(itemContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(itemContainerPanelLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButton5)
+                        .addComponent(addItemBtn)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4)
+                        .addComponent(updateItemBtn)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(deleteItemBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(itemContainerPanelLayout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -416,7 +581,7 @@ public class MainUI extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        itemContainerPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jButton3, jButton4, jButton5});
+        itemContainerPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {addItemBtn, deleteItemBtn, updateItemBtn});
 
         menuPanel.addTab("Items", itemContainerPanel);
 
@@ -452,6 +617,34 @@ public class MainUI extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void addItemBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addItemBtnActionPerformed
+        ItemEditorUI itemEditor = new ItemEditorUI("ADD", this, itemTable);
+        itemEditor.setVisible(true);
+    }//GEN-LAST:event_addItemBtnActionPerformed
+
+    private void updateItemBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateItemBtnActionPerformed
+        ItemEditorUI itemEditor = new ItemEditorUI("UPDATE", this, itemTable);
+        itemEditor.setVisible(true);
+    }//GEN-LAST:event_updateItemBtnActionPerformed
+
+    private void deleteItemBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteItemBtnActionPerformed
+        //i check niya if naa bay selected na row
+        if(itemTable.getSelectedRow() >= 0) {
+            int choice = JOptionPane.showConfirmDialog(this, "Do you really want to delete this row?", 
+                "Delete Row", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+            //check niya ang value sa choice (0 = yes, 1 = no)
+            if(choice == 0) {
+                deleteData();
+                tableModel.removeRow(itemTable.getSelectedRow());
+                this.updateMenu();
+            }
+        }
+        else {
+            JOptionPane.showMessageDialog(this, "No row selected", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_deleteItemBtnActionPerformed
+
     public static void main(String args[]) {
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
@@ -468,20 +661,20 @@ public class MainUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addItemBtn;
     private javax.swing.JPanel bodyPanel;
     private javax.swing.JLabel cashText;
     private javax.swing.JLabel changeText;
     private javax.swing.JPanel container;
+    private javax.swing.JButton deleteItemBtn;
     private javax.swing.JComboBox<String> filterComboBox;
     private javax.swing.JPanel filterContainer;
     private javax.swing.JPanel homeContainerPanel;
     private javax.swing.JLabel icon;
     private javax.swing.JPanel itemContainerPanel;
+    private javax.swing.JTable itemTable;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -492,7 +685,6 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JPanel menuContainerPanel;
     private javax.swing.JPanel menuItemContainer;
     private javax.swing.JScrollPane menuItemScrollPane;
@@ -502,5 +694,6 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane orderScrollPane;
     private javax.swing.JTextField searchBar;
     private javax.swing.JLabel totalCostText;
+    private javax.swing.JButton updateItemBtn;
     // End of variables declaration//GEN-END:variables
 }
