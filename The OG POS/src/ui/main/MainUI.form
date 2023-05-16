@@ -357,17 +357,17 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
-                              <Component id="totalCostText" min="-2" pref="171" max="-2" attributes="0"/>
+                              <Component id="totalCostTxt" min="-2" pref="171" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
-                              <Component id="cashText" min="-2" pref="171" max="-2" attributes="0"/>
+                              <Component id="cashTxt" min="-2" pref="171" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel8" min="-2" pref="74" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
-                              <Component id="changeText" min="-2" pref="171" max="-2" attributes="0"/>
+                              <Component id="changeTxt" min="-2" pref="171" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jButton1" pref="165" max="32767" attributes="0"/>
@@ -385,17 +385,17 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="totalCostText" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="totalCostTxt" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="cashText" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cashTxt" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="changeText" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="changeTxt" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="32767" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -420,8 +420,8 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="jLabel3" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -429,7 +429,7 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jLabel3" pref="24" max="32767" attributes="0"/>
+                                  <Component id="jLabel3" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -438,10 +438,13 @@
                       <SubComponents>
                         <Component class="javax.swing.JLabel" name="jLabel3">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Segoe UI" size="18" style="1"/>
+                            </Property>
                             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                               <Color blue="ff" green="ff" red="ff" type="rgb"/>
                             </Property>
-                            <Property name="text" type="java.lang.String" value="Name"/>
+                            <Property name="text" type="java.lang.String" value="ORDER"/>
                           </Properties>
                         </Component>
                       </SubComponents>
@@ -495,7 +498,7 @@
                         <Property name="text" type="java.lang.String" value="TOTAL:"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JLabel" name="totalCostText">
+                    <Component class="javax.swing.JLabel" name="totalCostTxt">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Segoe UI" size="16" style="1"/>
@@ -504,7 +507,7 @@
                           <Color blue="ff" green="ff" red="ff" type="rgb"/>
                         </Property>
                         <Property name="horizontalAlignment" type="int" value="11"/>
-                        <Property name="text" type="java.lang.String" value="&#x20b1;999999.99"/>
+                        <Property name="text" type="java.lang.String" value="&#x20b1; 999999.99"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel6">
@@ -518,7 +521,7 @@
                         <Property name="text" type="java.lang.String" value="CASH:"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JLabel" name="cashText">
+                    <Component class="javax.swing.JLabel" name="cashTxt">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Segoe UI" size="14" style="1"/>
@@ -527,7 +530,7 @@
                           <Color blue="ff" green="ff" red="ff" type="rgb"/>
                         </Property>
                         <Property name="horizontalAlignment" type="int" value="11"/>
-                        <Property name="text" type="java.lang.String" value="&#x20b1;999999.99"/>
+                        <Property name="text" type="java.lang.String" value="&#x20b1; 999999.99"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel8">
@@ -541,7 +544,7 @@
                         <Property name="text" type="java.lang.String" value="CHANGE:"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JLabel" name="changeText">
+                    <Component class="javax.swing.JLabel" name="changeTxt">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Segoe UI" size="14" style="1"/>
@@ -550,7 +553,7 @@
                           <Color blue="ff" green="ff" red="ff" type="rgb"/>
                         </Property>
                         <Property name="horizontalAlignment" type="int" value="11"/>
-                        <Property name="text" type="java.lang.String" value="&#x20b1;999999.99"/>
+                        <Property name="text" type="java.lang.String" value="&#x20b1; 999999.99"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JButton" name="jButton1">

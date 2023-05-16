@@ -3,24 +3,36 @@ package ui.custom;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
+import ui.custom.listener.OrderItemListener;
 
 
 public class ItemUI extends javax.swing.JPanel {
 
     private Color borderColor;
-    //private String foodType;
     
-    public ItemUI(String foodType, String name, float price) {
+    String foodType;
+    
+    public ItemUI(String foodType, String name, float price, JPanel orderContainer) {
         initComponents();
         
         this.setPreferredSize(new Dimension(425, 76));
         
-        foodNameTxt.setText(name);
         
-        priceTxt.setText("₱"+String.format("%.2f", price));
-        setBorderColor(foodType);
+        foodNameTxt.setText(name);
+        //priceTxt.setText("₱"+String.format("%.2f", price));
+        priceTxt.setText(String.format("%.2f", price));
+        
+        this.foodType = foodType;
+        setBorderColor(this.foodType);
+        
+        //mag add ug event listener
+        OrderItemListener il = new OrderItemListener(this, orderContainer);
+        addMouseListener(il);
     }
     
     private void setBorderColor(String foodType) {
@@ -45,7 +57,18 @@ public class ItemUI extends javax.swing.JPanel {
         Border newBorder = BorderFactory.createLineBorder(borderColor, 3);
         this.setBorder(newBorder);
     }
+    
+    public String getFoodName() {
+        return foodNameTxt.getText();
+    }
 
+    public float getPrice() {
+        return Float.parseFloat(priceTxt.getText());
+    }
+    
+    public String getFoodType() {
+        return foodType;
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -57,6 +80,7 @@ public class ItemUI extends javax.swing.JPanel {
 
         foodNameTxt = new javax.swing.JLabel();
         priceTxt = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(33, 33, 33));
         setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 51, 51), 3));
@@ -67,7 +91,11 @@ public class ItemUI extends javax.swing.JPanel {
 
         priceTxt.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         priceTxt.setForeground(new java.awt.Color(255, 255, 255));
-        priceTxt.setText("₱99999.99");
+        priceTxt.setText("99999.99");
+
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("₱");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -75,10 +103,13 @@ public class ItemUI extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(foodNameTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
-                    .addComponent(priceTxt, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(171, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(foodNameTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 242, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(priceTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 242, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(156, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -86,7 +117,9 @@ public class ItemUI extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(foodNameTxt)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(priceTxt)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(priceTxt)
+                    .addComponent(jLabel1))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -94,6 +127,7 @@ public class ItemUI extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel foodNameTxt;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel priceTxt;
     // End of variables declaration//GEN-END:variables
 }

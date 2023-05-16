@@ -14,6 +14,7 @@ public class ItemEditorUI extends javax.swing.JFrame {
 
     private Color selectedColor;
     private int selectedRow;
+    private MainUI main;
     //objects use for connecting and interacting with the DataBase
     Connection con;
     PreparedStatement ps;
@@ -26,12 +27,13 @@ public class ItemEditorUI extends javax.swing.JFrame {
         initComponents();
         
         functionBtn.setText(function);
-        initialize(itemTable);
+        initialize(itemTable, main);
         
         connect();
     }
     
-    private void initialize(JTable itemTable) {
+    private void initialize(JTable itemTable, MainUI main) {
+        this.main = main;
         this.itemTable = itemTable;
         this.tableModel = (DefaultTableModel) this.itemTable.getModel();
         
@@ -84,11 +86,11 @@ public class ItemEditorUI extends javax.swing.JFrame {
     
     private void UpdateItemToDatabase(String type, String name, float price, int selectedRow) {
         try {
-            ps = con.prepareStatement("UPDATE food_items SET foodType = ?, foodName = ?, price = ? WHERE id=?");
+            ps = con.prepareStatement("UPDATE food_items SET foodType = ?, foodName = ?, price = ? WHERE foodName=?");
             ps.setString(1, type);
             ps.setString(2, name);
             ps.setFloat(3, price);
-            ps.setInt(4, selectedRow+1);
+            ps.setString(4, itemTable.getValueAt(selectedRow, 1).toString());
             
             ps.executeUpdate();
             
@@ -288,6 +290,9 @@ public class ItemEditorUI extends javax.swing.JFrame {
             }
             
             tableModel.addRow(newRow);
+            
+            //i update ang menu sa MainUI
+            main.updateMenu();
         }
         else if(functionBtn.getText().equalsIgnoreCase("UPDATE")) {
             String type = foodTypeComboBox.getSelectedItem().toString();
@@ -300,6 +305,9 @@ public class ItemEditorUI extends javax.swing.JFrame {
             tableModel.setValueAt(type, selectedRow, 0);
             tableModel.setValueAt(name, selectedRow, 1);
             tableModel.setValueAt(price, selectedRow, 2);
+            
+            //i update ang menu sa MainUI
+            main.updateMenu();
         }
         
         setVisible(false); //closes item editor
