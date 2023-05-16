@@ -1,11 +1,16 @@
-
 package ui.main;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.Color;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.Border;
@@ -16,11 +21,27 @@ import javax.swing.border.Border;
  */
 public class CreateAccountUI extends javax.swing.JFrame {
 
-    /**
-     * Creates new form CreateAccountUI
-     */
+    private Connection con;
+    private PreparedStatement ps;
+    
+    String gender;
+    
     public CreateAccountUI() {
         initComponents();
+        
+        connect();
+    }
+    
+    private void connect() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Driver Loaded for CreateAccountUI");
+            
+            con = DriverManager.getConnection("jdbc:mysql://localhost/foodterria", "root", "");
+            
+        } catch (ClassNotFoundException | SQLException e) {
+            Logger.getLogger(MainUI.class.getName()).log(Level.SEVERE, null, e);
+        }
     }
 
     /**
@@ -88,11 +109,6 @@ public class CreateAccountUI extends javax.swing.JFrame {
         emailField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Email Address", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 12))); // NOI18N
 
         passwordField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Password", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 12))); // NOI18N
-        passwordField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                passwordFieldActionPerformed(evt);
-            }
-        });
 
         maleToggle.setText("Male");
         maleToggle.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -118,6 +134,11 @@ public class CreateAccountUI extends javax.swing.JFrame {
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 registerBtnMouseExited(evt);
+            }
+        });
+        registerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                registerBtnActionPerformed(evt);
             }
         });
 
@@ -188,12 +209,12 @@ public class CreateAccountUI extends javax.swing.JFrame {
                     .addComponent(femaleToggle))
                 .addGap(18, 18, 18)
                 .addComponent(registerBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
                 .addComponent(backBtn)
                 .addContainerGap())
         );
 
-        jPanel2Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {emailField, femaleToggle, firstNameField, lastNameField, maleToggle, passwordField, userField});
+        jPanel2Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {emailField, femaleToggle, firstNameField, lastNameField, maleToggle, passwordField, registerBtn, userField});
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -216,10 +237,20 @@ public class CreateAccountUI extends javax.swing.JFrame {
 
     private void femaleToggleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_femaleToggleActionPerformed
         maleToggle.setSelected(false);
+        
+        femaleToggle.setBackground(new Color(33, 33, 33));
+        femaleToggle.setForeground(Color.white);
+        
+        gender = "F";
     }//GEN-LAST:event_femaleToggleActionPerformed
 
     private void maleToggleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maleToggleActionPerformed
         femaleToggle.setSelected(false);
+        
+        maleToggle.setBackground(new Color(33, 33, 33));
+        maleToggle.setForeground(Color.white);
+        
+        gender = "M";
     }//GEN-LAST:event_maleToggleActionPerformed
 
     private void backBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backBtnMouseClicked
@@ -227,16 +258,14 @@ public class CreateAccountUI extends javax.swing.JFrame {
         
         this.setVisible(false);
         loginUI.setVisible(true);
-        
-        
     }//GEN-LAST:event_backBtnMouseClicked
 
     private void registerBtnMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_registerBtnMouseEntered
-        registerBtn.setBackground(new Color(255,109,96));
+        registerBtn.setBackground(new Color(33, 33, 33));
         registerBtn.setForeground(Color.white);
         
         //changes border line color to a hover colored border
-        Border newBorderColor = BorderFactory.createLineBorder(new Color(255,109,96), 1);
+        Border newBorderColor = BorderFactory.createLineBorder(new Color(35, 35, 35), 1);
         registerBtn.setBorder(newBorderColor);
     }//GEN-LAST:event_registerBtnMouseEntered
 
@@ -262,20 +291,38 @@ public class CreateAccountUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_passwordStateBtnMouseClicked
 
-    private void passwordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_passwordFieldActionPerformed
+    private void registerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerBtnActionPerformed
+        String fName = firstNameField.getText();
+        String lName = lastNameField.getText();
+        String email = emailField.getText();
+        String username = userField.getText();
+        String password = passwordField.getText();
+        
+        try {
+            ps = con.prepareStatement("INSERT INTO accounts (firstName, lastName, email, username, password, gender) VALUES (?,?,?,?,?,?)");
+            
+            ps.setString(1, fName);
+            ps.setString(2, lName);
+            ps.setString(3, email);
+            ps.setString(4, username);
+            ps.setString(5, password);
+            ps.setString(6, gender);
+            
+            ps.executeUpdate();
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(CreateAccountUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        JOptionPane.showMessageDialog(this, "Account Created Succesfully!", 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+        
+        dispose();
+        
+        LoginPageUI loginUI = new LoginPageUI();
+        loginUI.setVisible(true);
+    }//GEN-LAST:event_registerBtnActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-//    public static void main(String args[]) {
-//        try {
-//            UIManager.setLookAndFeel(new FlatLightLaf());
-//        } catch (UnsupportedLookAndFeelException ex) {
-//            Logger.getLogger(LoginPageUI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel backBtn;

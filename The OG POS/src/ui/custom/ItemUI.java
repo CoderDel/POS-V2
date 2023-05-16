@@ -7,32 +7,97 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.border.Border;
-import ui.custom.listener.OrderItemListener;
+import javax.swing.table.DefaultTableModel;
+import ui.main.MainUI;
 
 
 public class ItemUI extends javax.swing.JPanel {
 
+    private JTable orderTable;
     private Color borderColor;
+    private String foodType;
+    private String foodName;
+    private float price;
+    private int qty;
     
-    String foodType;
     
-    public ItemUI(String foodType, String name, float price, JPanel orderContainer) {
+    public ItemUI(String foodType, String name, float price, JTable orderTable) {
         initComponents();
         
-        this.setPreferredSize(new Dimension(425, 76));
+        this.setPreferredSize(new Dimension(433, 76));
         
-        
-        foodNameTxt.setText(name);
-        //priceTxt.setText("₱"+String.format("%.2f", price));
-        priceTxt.setText(String.format("%.2f", price));
-        
+        //initialize variables
         this.foodType = foodType;
+        this.foodName = name;
+        this.price = price;
+        this.qty = 1;
+        
+        //set values to JLabels
+        foodNameTxt.setText(this.foodName);
+        priceTxt.setText(String.format("%.2f", this.price));
+        
         setBorderColor(this.foodType);
         
-        //mag add ug event listener
-        OrderItemListener il = new OrderItemListener(this, orderContainer);
-        addMouseListener(il);
+        //kuhaon ang reference sa order table
+        this.orderTable = orderTable;
+        
+        //adds a mouse listener to the ItemUI
+        addMouseListener(new MouseAdapter() {
+            //kung click ang itemUI, mag add ug row sa orderTable
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                DefaultTableModel tableModel = (DefaultTableModel) orderTable.getModel();
+                boolean itemFound = false;
+                
+                //i check sa if naa bay row sa table
+                if(tableModel.getRowCount() > 0) {
+                    //gamiton nato ang for loop para ma isa-isa natog access ang unod sa orderTabel
+                    for(int i=0; i<tableModel.getRowCount(); i++) {
+                        //i check sa nato ug naa ba ang giclick nato na item
+                        itemFound = foodName.equals(tableModel.getValueAt(i, 1).toString());
+
+                        //kung nag exist and item, dungagan lang nato ang quantity niya
+                        if(itemFound) {
+                            qty++;
+                            tableModel.setValueAt(qty, i, 3);
+                            break;
+                        }  
+                    }
+                    
+                    //ug wala nag exist, mag create ta ug new row sa table
+                    if(!itemFound) {
+                        Object[] newRow = new Object[4];
+                        newRow[0] = foodType;
+                        newRow[1] = foodName;
+                        newRow[2] = price;
+                        newRow[3] = qty;
+                        tableModel.addRow(newRow);
+                    }
+                }
+                else {
+                    //kung walay row, edi mag add ta dretcho ug new row sa table
+                    Object[] newRow = new Object[4];
+                    newRow[0] = foodType;
+                    newRow[1] = foodName;
+                    newRow[2] = price;
+                    newRow[3] = qty;
+                    tableModel.addRow(newRow);
+                }
+                
+            }
+       
+            @Override 
+            public void mouseEntered(MouseEvent e) {
+                setBackground(new Color(66,66,66));
+            }
+            
+            @Override 
+            public void mouseExited(MouseEvent e) {
+                setBackground(new Color(33,33,33));
+            }
+        });
     }
     
     private void setBorderColor(String foodType) {
@@ -61,14 +126,15 @@ public class ItemUI extends javax.swing.JPanel {
     public String getFoodName() {
         return foodNameTxt.getText();
     }
-
-    public float getPrice() {
-        return Float.parseFloat(priceTxt.getText());
-    }
     
     public String getFoodType() {
         return foodType;
     }
+    
+    public int getQty() {
+        return qty;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

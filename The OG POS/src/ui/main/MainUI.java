@@ -10,14 +10,20 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import pos.ui.popup.ItemEditorUI;
+import pos.ui.popup.PaymentUI;
 import ui.custom.ItemUI;
 
 public class MainUI extends javax.swing.JFrame {
     
     ArrayList<ItemUI> foodItems;
     DefaultTableModel tableModel;
+    DefaultTableModel orderModel;
+    
+    int selectedOrderRow;
     
     //objects use for connecting and interacting with the DataBase
     Connection con;
@@ -34,11 +40,23 @@ public class MainUI extends javax.swing.JFrame {
         tableModel = (DefaultTableModel) itemTable.getModel();
         foodItems = new ArrayList();
         
-        connect(); 
+        connect(); //connect sa database
         fetchData(); //loads all data to the table
 
         addItemToMenuContainer();
         
+        //i-detect lang ani na listener if there are changes sa orderTable kay since gusto
+        //nato na machange ang total cost visually
+        //therefore, if naay changes (INSERT or DELETE), mag calculate sa total cost
+        TableModelListener tml = new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                calculateTotalCost();
+            }
+        };
+        
+        orderModel = (DefaultTableModel)orderTable.getModel();
+        orderModel.addTableModelListener(tml);
     }
     
     //app to database methods
@@ -88,7 +106,6 @@ public class MainUI extends javax.swing.JFrame {
         for(int i=0; i<foodItems.size(); i++) {
             if(foodItems.get(i).getFoodName()
                     .equals(itemTable.getValueAt(selectedRow, 1).toString())) {
-                System.out.println("Item removed: "+foodItems.get(i).getFoodName());
                 foodItems.remove(i);
             }
         }
@@ -99,8 +116,6 @@ public class MainUI extends javax.swing.JFrame {
             
             ps.setString(1, itemTable.getValueAt(selectedRow, 1).toString());
             
-            System.out.println("Item Deleted: "+ itemTable.getValueAt(selectedRow, 1).toString());
-            
             ps.executeUpdate();
             
         } catch (SQLException ex) {
@@ -108,7 +123,7 @@ public class MainUI extends javax.swing.JFrame {
         }
     }
     
-    ///////////////////// DONT MIND THIS    ///////////////////////
+    ///////////////////// FOR MENU ITEM CONTAINER METHODS   ///////////////////////
     //ui methods
     private final int defaultMenuHeight = 432;
     private int posY = 0;
@@ -121,7 +136,7 @@ public class MainUI extends javax.swing.JFrame {
                     (String) itemTable.getValueAt(i, 0),
                     (String) itemTable.getValueAt(i, 1),
                     (float) itemTable.getValueAt(i, 2),
-                    orderItemContainer
+                    orderTable
             );
             
             foodItems.add(item); //ibutang ang item sa foodItem array para gamiton later
@@ -139,10 +154,6 @@ public class MainUI extends javax.swing.JFrame {
             else {
                 menuItemContainer.add(item);
             }
-            
-//            System.out.println("Item height: "+item.getPreferredSize().height);
-//            System.out.println("Row height: "+getRowHeight());
-//            System.out.println("Menu height: "+menuItemContainer.getPreferredSize().height+"\n");
 
             posY += item.getPreferredSize().height + gap;
         }
@@ -153,9 +164,7 @@ public class MainUI extends javax.swing.JFrame {
         
         for(int i=0; i<foodItems.size(); i++) {
             height += foodItems.get(i).getPreferredSize().height;
-            System.out.println(foodItems.get(i).getFoodName());
         }
-        System.out.println("Row Height: "+height+"\n");
         
         return height;
     }
@@ -177,11 +186,23 @@ public class MainUI extends javax.swing.JFrame {
         
         //System.out.println("Menue Height in Update: "+menuItemContainer.getPreferredSize().height);
         addItemToMenuContainer(); // i readd tanan items sa menu
+        
+        menuItemContainer.revalidate();
+        menuItemContainer.repaint();
     }
     
     
     
-    ///////////////////// DONT MIND THIS    ///////////////////////
+    ///////////////////// ORDER TABLE METHODS    ///////////////////////
+    public void calculateTotalCost() {
+        float totalPrice = 0;
+        
+        for(int i=0; i<orderTable.getRowCount(); i++) {
+            totalPrice += Float.parseFloat(orderTable.getValueAt(i, 2).toString()) * Float.parseFloat(orderTable.getValueAt(i, 3).toString());
+        }
+        
+        totalCostTxt.setText("₱ "+totalPrice);
+    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -198,27 +219,29 @@ public class MainUI extends javax.swing.JFrame {
         bodyPanel = new javax.swing.JPanel();
         menuPanel = new javax.swing.JTabbedPane();
         homeContainerPanel = new javax.swing.JPanel();
+        welcomeLabel = new javax.swing.JLabel();
         menuContainerPanel = new javax.swing.JPanel();
         container = new javax.swing.JPanel();
         filterContainer = new javax.swing.JPanel();
         icon = new javax.swing.JLabel();
-        searchBar = new javax.swing.JTextField();
         filterComboBox = new javax.swing.JComboBox<>();
         menuItemScrollPane = new javax.swing.JScrollPane();
         menuItemContainer = new javax.swing.JPanel();
         orderPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        orderScrollPane = new javax.swing.JScrollPane();
-        orderItemContainer = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         totalCostTxt = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         cashTxt = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         changeTxt = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        orderTable = new javax.swing.JTable();
+        removeOrderBtn = new javax.swing.JButton();
+        reduceQtyBtn = new javax.swing.JButton();
+        removeAllBtn = new javax.swing.JButton();
+        payBtn = new javax.swing.JButton();
         itemContainerPanel = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -270,15 +293,25 @@ public class MainUI extends javax.swing.JFrame {
 
         homeContainerPanel.setBackground(new java.awt.Color(66, 66, 66));
 
+        welcomeLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        welcomeLabel.setForeground(new java.awt.Color(255, 255, 255));
+        welcomeLabel.setText("Hello <Name Here>!, Welcome to FoodTerria POS System");
+
         javax.swing.GroupLayout homeContainerPanelLayout = new javax.swing.GroupLayout(homeContainerPanel);
         homeContainerPanel.setLayout(homeContainerPanelLayout);
         homeContainerPanelLayout.setHorizontalGroup(
             homeContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 792, Short.MAX_VALUE)
+            .addGroup(homeContainerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(welcomeLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         homeContainerPanelLayout.setVerticalGroup(
             homeContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 488, Short.MAX_VALUE)
+            .addGroup(homeContainerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(welcomeLabel)
+                .addContainerGap(542, Short.MAX_VALUE))
         );
 
         menuPanel.addTab("Home", homeContainerPanel);
@@ -292,13 +325,14 @@ public class MainUI extends javax.swing.JFrame {
 
         icon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ui/icons/search.png"))); // NOI18N
 
-        searchBar.setBackground(new java.awt.Color(66, 66, 66));
-        searchBar.setForeground(new java.awt.Color(204, 204, 204));
-        searchBar.setText("Search item...");
-
         filterComboBox.setBackground(new java.awt.Color(66, 66, 66));
         filterComboBox.setForeground(new java.awt.Color(255, 255, 255));
         filterComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "No Filter", "Breakfast", "Lunch", "Dinner", "Dessert", "Drink" }));
+        filterComboBox.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                filterComboBoxItemStateChanged(evt);
+            }
+        });
 
         javax.swing.GroupLayout filterContainerLayout = new javax.swing.GroupLayout(filterContainer);
         filterContainer.setLayout(filterContainerLayout);
@@ -308,9 +342,7 @@ public class MainUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(icon)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchBar, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(filterComboBox, 0, 190, Short.MAX_VALUE)
+                .addComponent(filterComboBox, 0, 404, Short.MAX_VALUE)
                 .addContainerGap())
         );
         filterContainerLayout.setVerticalGroup(
@@ -318,9 +350,7 @@ public class MainUI extends javax.swing.JFrame {
             .addGroup(filterContainerLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(filterContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(filterContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(icon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(searchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(icon)
                     .addComponent(filterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -339,7 +369,7 @@ public class MainUI extends javax.swing.JFrame {
         );
         menuItemContainerLayout.setVerticalGroup(
             menuItemContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 432, Short.MAX_VALUE)
+            .addGap(0, 522, Short.MAX_VALUE)
         );
 
         menuItemScrollPane.setViewportView(menuItemContainer);
@@ -356,7 +386,7 @@ public class MainUI extends javax.swing.JFrame {
             .addGroup(containerLayout.createSequentialGroup()
                 .addComponent(filterContainer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(menuItemScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(menuItemScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE))
         );
 
         orderPanel.setBackground(new java.awt.Color(66, 66, 66));
@@ -373,7 +403,7 @@ public class MainUI extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -383,26 +413,6 @@ public class MainUI extends javax.swing.JFrame {
                 .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-
-        orderScrollPane.setBackground(new java.awt.Color(66, 66, 66));
-        orderScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        orderScrollPane.setPreferredSize(new java.awt.Dimension(100, 238));
-
-        orderItemContainer.setBackground(new java.awt.Color(66, 66, 66));
-        orderItemContainer.setPreferredSize(new java.awt.Dimension(542, 240));
-
-        javax.swing.GroupLayout orderItemContainerLayout = new javax.swing.GroupLayout(orderItemContainer);
-        orderItemContainer.setLayout(orderItemContainerLayout);
-        orderItemContainerLayout.setHorizontalGroup(
-            orderItemContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 542, Short.MAX_VALUE)
-        );
-        orderItemContainerLayout.setVerticalGroup(
-            orderItemContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 240, Short.MAX_VALUE)
-        );
-
-        orderScrollPane.setViewportView(orderItemContainer);
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
@@ -431,40 +441,119 @@ public class MainUI extends javax.swing.JFrame {
         changeTxt.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         changeTxt.setText("₱ 999999.99");
 
-        jButton1.setText("Continue to Payment");
+        orderTable.setBackground(new java.awt.Color(66, 66, 66));
+        orderTable.setForeground(new java.awt.Color(255, 255, 255));
+        orderTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        jButton2.setText("Remove All Orders");
+            },
+            new String [] {
+                "Food Type", "Food Name", "Price", "Qty."
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.Float.class, java.lang.Integer.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        orderTable.setGridColor(new java.awt.Color(255, 255, 255));
+        orderTable.getTableHeader().setReorderingAllowed(false);
+        orderTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                orderTableMouseClicked(evt);
+            }
+        });
+        jScrollPane2.setViewportView(orderTable);
+        if (orderTable.getColumnModel().getColumnCount() > 0) {
+            orderTable.getColumnModel().getColumn(0).setResizable(false);
+            orderTable.getColumnModel().getColumn(1).setResizable(false);
+            orderTable.getColumnModel().getColumn(2).setResizable(false);
+            orderTable.getColumnModel().getColumn(3).setResizable(false);
+            orderTable.getColumnModel().getColumn(3).setPreferredWidth(10);
+        }
+
+        removeOrderBtn.setText("Remove Order");
+        removeOrderBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeOrderBtnActionPerformed(evt);
+            }
+        });
+
+        reduceQtyBtn.setText("Reduce Qty.");
+        reduceQtyBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                reduceQtyBtnActionPerformed(evt);
+            }
+        });
+
+        removeAllBtn.setText("Remove All Orders");
+        removeAllBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeAllBtnActionPerformed(evt);
+            }
+        });
+
+        payBtn.setText("Continue to Payment");
+        payBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                payBtnActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout orderPanelLayout = new javax.swing.GroupLayout(orderPanel);
         orderPanel.setLayout(orderPanelLayout);
         orderPanelLayout.setHorizontalGroup(
             orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(orderScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(orderPanelLayout.createSequentialGroup()
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(totalCostTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(orderPanelLayout.createSequentialGroup()
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(cashTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(orderPanelLayout.createSequentialGroup()
-                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(changeTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(orderPanelLayout.createSequentialGroup()
-                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
+                .addComponent(reduceQtyBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 151, Short.MAX_VALUE))
+                .addComponent(removeOrderBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(orderPanelLayout.createSequentialGroup()
+                .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(removeAllBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(orderPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(orderPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(totalCostTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(orderPanelLayout.createSequentialGroup()
+                        .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cashTxt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(changeTxt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(payBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         orderPanelLayout.setVerticalGroup(
             orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(orderPanelLayout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(orderScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(removeOrderBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(reduceQtyBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(removeAllBtn)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(totalCostTxt))
@@ -476,14 +565,12 @@ public class MainUI extends javax.swing.JFrame {
                 .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(changeTxt))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(orderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2))
+                .addGap(18, 18, 18)
+                .addComponent(payBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        orderPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jButton1, jButton2});
+        orderPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {payBtn, reduceQtyBtn, removeAllBtn, removeOrderBtn});
 
         javax.swing.GroupLayout menuContainerPanelLayout = new javax.swing.GroupLayout(menuContainerPanel);
         menuContainerPanel.setLayout(menuContainerPanelLayout);
@@ -586,7 +673,7 @@ public class MainUI extends javax.swing.JFrame {
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 590, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(itemContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(deleteItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                            .addComponent(deleteItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
                             .addComponent(updateItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(addItemBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
@@ -606,7 +693,7 @@ public class MainUI extends javax.swing.JFrame {
                     .addGroup(itemContainerPanelLayout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -674,6 +761,116 @@ public class MainUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_deleteItemBtnActionPerformed
 
+    private void payBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payBtnActionPerformed
+        PaymentUI payment = new PaymentUI(totalCostTxt, cashTxt, changeTxt);
+        payment.setVisible(true);
+    }//GEN-LAST:event_payBtnActionPerformed
+
+    //i remove tanan item sa orderTable
+    private void removeAllBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAllBtnActionPerformed
+        orderModel.setRowCount(0);
+        
+        //reset ang cash & change value
+        cashTxt.setText("₱  0.00");
+        changeTxt.setText("₱  0.00");
+    }//GEN-LAST:event_removeAllBtnActionPerformed
+
+    private void reduceQtyBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reduceQtyBtnActionPerformed
+        System.out.println(selectedOrderRow);
+        
+        if(orderTable.getSelectedRow() > -1) {
+            int qty = Integer.parseInt(orderTable.getValueAt(selectedOrderRow, 3).toString());
+            if(qty > 1) {   
+                orderTable.setValueAt(--qty, selectedOrderRow, 3);
+                System.out.println("New Qty: "+orderTable.getValueAt(selectedOrderRow, 3)); 
+            }
+            else {
+                orderModel.removeRow(selectedOrderRow);
+            }
+        }
+        else {
+            //show error dialog
+            JOptionPane.showMessageDialog(this, "No row selected", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_reduceQtyBtnActionPerformed
+
+    private void orderTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_orderTableMouseClicked
+        selectedOrderRow = orderTable.getSelectedRow();
+    }//GEN-LAST:event_orderTableMouseClicked
+
+    private void removeOrderBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeOrderBtnActionPerformed
+        
+        if(orderTable.getRowCount() > 0 && orderTable.getSelectedRow() > -1)
+            orderModel.removeRow(selectedOrderRow);
+        else 
+            JOptionPane.showMessageDialog(this, "No row selected", "Error", JOptionPane.ERROR_MESSAGE);
+    }//GEN-LAST:event_removeOrderBtnActionPerformed
+
+    /////////////////////////////////////////////////
+    /////////////////   FOR FILTER  /////////////////
+    /////////////////////////////////////////////////
+    private void filterComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_filterComboBoxItemStateChanged
+
+        switch(filterComboBox.getSelectedItem().toString()) {
+            case "No Filter":
+                updateMenu();
+                break;
+            case "Breakfast":
+                showMenuFromFilter(filterComboBox.getSelectedItem().toString());
+                break;
+            case "Lunch":
+                showMenuFromFilter(filterComboBox.getSelectedItem().toString());
+                break;
+            case "Dinner":
+                showMenuFromFilter(filterComboBox.getSelectedItem().toString());
+                break;
+            case "Dessert":
+                showMenuFromFilter(filterComboBox.getSelectedItem().toString());
+                break;
+            case "Drink":
+                showMenuFromFilter(filterComboBox.getSelectedItem().toString());
+                break;
+        }
+    }//GEN-LAST:event_filterComboBoxItemStateChanged
+
+    private void showMenuFromFilter(String filterType) {
+        ArrayList<ItemUI> foods = new ArrayList();
+        foods.clear();
+        
+        for(int i=0; i<foodItems.size(); i++) {
+            if(foodItems.get(i).getFoodType().equalsIgnoreCase(filterType)) {
+                foods.add(foodItems.get(i));
+            }
+        }
+        
+        posY = 0;
+        menuItemContainer.removeAll();
+        
+        for(int i=0; i<foods.size(); i++) {
+            foods.get(i).setBounds(0, posY, 
+                    foods.get(i).getPreferredSize().width, 
+                    foods.get(i).getPreferredSize().height
+            );
+            
+            if(this.getRowHeight() > menuItemContainer.getPreferredSize().height) {
+                menuItemContainer.setPreferredSize(new Dimension(
+                        menuItemContainer.getPreferredSize().width,
+                        menuItemContainer.getPreferredSize().height + foods.get(i).getPreferredSize().height + 1
+                ));
+                
+                menuItemContainer.add(foods.get(i));
+            }
+            else {
+                menuItemContainer.add(foods.get(i));
+            }
+
+            posY += foods.get(i).getPreferredSize().height + gap;
+        }
+        
+        menuItemContainer.revalidate();
+        menuItemContainer.repaint();
+    }
+    
     public static void main(String args[]) {
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
@@ -687,8 +884,8 @@ public class MainUI extends javax.swing.JFrame {
                 new MainUI().setVisible(true);
             }
         });
-    }
-
+    }    
+        
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addItemBtn;
     private javax.swing.JPanel bodyPanel;
@@ -702,8 +899,6 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JLabel icon;
     private javax.swing.JPanel itemContainerPanel;
     private javax.swing.JTable itemTable;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -714,15 +909,19 @@ public class MainUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel menuContainerPanel;
     private javax.swing.JPanel menuItemContainer;
     private javax.swing.JScrollPane menuItemScrollPane;
     private javax.swing.JTabbedPane menuPanel;
-    private javax.swing.JPanel orderItemContainer;
     private javax.swing.JPanel orderPanel;
-    private javax.swing.JScrollPane orderScrollPane;
-    private javax.swing.JTextField searchBar;
+    private javax.swing.JTable orderTable;
+    private javax.swing.JButton payBtn;
+    private javax.swing.JButton reduceQtyBtn;
+    private javax.swing.JButton removeAllBtn;
+    private javax.swing.JButton removeOrderBtn;
     private javax.swing.JLabel totalCostTxt;
     private javax.swing.JButton updateItemBtn;
+    private javax.swing.JLabel welcomeLabel;
     // End of variables declaration//GEN-END:variables
 }

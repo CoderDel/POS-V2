@@ -2,22 +2,44 @@ package ui.main;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.Color;
+import java.awt.Font;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.Border;
 
-public class LoginPageUI extends javax.swing.JFrame {
 
-    /**
-     * Creates new form LoginPage
-     */
+public class LoginPageUI extends javax.swing.JFrame {
+    
+    private Connection con;
+    private PreparedStatement ps;
+    private ResultSet rs;
+    
     public LoginPageUI() {
         initComponents();
+        
+        connect();
     }
 
+    private void connect() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Driver Loaded for CreateAccountUI");
+            
+            con = DriverManager.getConnection("jdbc:mysql://localhost/foodterria", "root", "");
+            
+        } catch (ClassNotFoundException | SQLException e) {
+            Logger.getLogger(MainUI.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -73,9 +95,25 @@ public class LoginPageUI extends javax.swing.JFrame {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Log in");
 
-        userField.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Username", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 12))); // NOI18N
+        userField.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)), "Username"));
+        userField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                userFieldFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                userFieldFocusLost(evt);
+            }
+        });
 
-        passwordField.setBorder(javax.swing.BorderFactory.createTitledBorder("Password"));
+        passwordField.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)), "Password"));
+        passwordField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                passwordFieldFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                passwordFieldFocusLost(evt);
+            }
+        });
 
         logInBtn.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         logInBtn.setText("Log in");
@@ -195,11 +233,79 @@ public class LoginPageUI extends javax.swing.JFrame {
     }//GEN-LAST:event_logInBtnMouseExited
 
     private void logInBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logInBtnActionPerformed
-        MainUI main = new MainUI();
+        String username = userField.getText();
+        String password = passwordField.getText();
         
-        main.setVisible(true);
-        this.setVisible(false);
+        try {
+            ps = con.prepareStatement("SELECT * FROM accounts WHERE username=? && password=?");
+            ps.setString(1, username);
+            ps.setString(2, password);
+            
+            rs = ps.executeQuery();
+            
+            boolean found = false;
+            while(rs.next()) {
+                String userFromDB = rs.getString("username");
+                String passFromDB = rs.getString("password");
+                
+                if(userFromDB.equals(username) && passFromDB.equals(password)) {
+                    dispose();
+                    
+                    MainUI main = new MainUI();
+                    main.setVisible(true);
+                    found = true;
+                    break;
+                }
+
+                if(!found) {
+                    JOptionPane.showMessageDialog(this, "Invalid Username or Password", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            
+        } catch (SQLException e) {
+            Logger.getLogger(LoginPageUI.class.getName()).log(Level.SEVERE, null, e);
+        }
+        
+        
+       
     }//GEN-LAST:event_logInBtnActionPerformed
+
+    private void userFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userFieldFocusGained
+        Border newBorderColor = BorderFactory.createLineBorder(Color.black, 2);
+        Border titledBorder = BorderFactory.createTitledBorder(newBorderColor, "Username");
+        userField.setBorder(titledBorder);
+        
+        userField.revalidate();
+        userField.repaint();
+    }//GEN-LAST:event_userFieldFocusGained
+
+    private void userFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userFieldFocusLost
+        System.out.println("Focus lost");
+        Border newBorderColor = BorderFactory.createLineBorder(Color.black, 1);
+        Border titledBorder = BorderFactory.createTitledBorder(newBorderColor, "Username");
+        userField.setBorder(titledBorder);
+        
+        userField.revalidate();
+        userField.repaint();
+    }//GEN-LAST:event_userFieldFocusLost
+
+    private void passwordFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_passwordFieldFocusGained
+        Border newBorderColor = BorderFactory.createLineBorder(Color.black, 2);
+        Border titledBorder = BorderFactory.createTitledBorder(newBorderColor, "Password");
+        passwordField.setBorder(titledBorder);
+        
+        passwordField.revalidate();
+        passwordField.repaint();
+    }//GEN-LAST:event_passwordFieldFocusGained
+
+    private void passwordFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_passwordFieldFocusLost
+        Border newBorderColor = BorderFactory.createLineBorder(Color.black, 1);
+        Border titledBorder = BorderFactory.createTitledBorder(newBorderColor, "Password");
+        passwordField.setBorder(titledBorder);
+        
+        passwordField.revalidate();
+        passwordField.repaint();
+    }//GEN-LAST:event_passwordFieldFocusLost
 
     
     public static void main(String args[]) {
