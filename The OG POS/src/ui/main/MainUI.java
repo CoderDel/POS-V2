@@ -1,12 +1,10 @@
 package ui.main;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import java.awt.Dimension;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Vector;
 import java.sql.*;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -16,7 +14,6 @@ import ui.custom.ItemUI;
 
 public class MainUI extends javax.swing.JFrame {
     
-    ArrayList<ItemUI> foodItems;
     DefaultTableModel tableModel;
     
     //objects use for connecting and interacting with the DataBase
@@ -28,13 +25,11 @@ public class MainUI extends javax.swing.JFrame {
         initComponents();
         
         tableModel = (DefaultTableModel) itemTable.getModel();
-        foodItems = new ArrayList();
         
         connect(); 
         fetchData(); //loads all data to the table
 
         addItemToMenuContainer();
-        
         
 //        ItemUI item = new ItemUI("Wendel", 90.0f, "Drink");
 //        item.setBounds(0, 0, item.getPreferredSize().width, item.getPreferredSize().height);
@@ -100,7 +95,6 @@ public class MainUI extends javax.swing.JFrame {
     
     ///////////////////// DONT MIND THIS    ///////////////////////
     //ui methods
-    private final int defaultMenuHeight = 432;
     private int posY = 0;
     private final int gap = 5;
     
@@ -110,48 +104,16 @@ public class MainUI extends javax.swing.JFrame {
             ItemUI item = new ItemUI(
                     (String) tableModel.getValueAt(i, 0),
                     (String) tableModel.getValueAt(i, 1),
-                    (float) tableModel.getValueAt(i, 2)
+                    (float)tableModel.getValueAt(i, 2)
             );
-            
-            foodItems.add(item); //ibutang ang item sa foodItem array para gamiton later
             
             item.setBounds(0, posY, item.getPreferredSize().width, item.getPreferredSize().height);
             
-            if(this.getRowHeight() > menuItemContainer.getPreferredSize().height) {
-                menuItemContainer.setPreferredSize(new Dimension(
-                        menuItemContainer.getPreferredSize().width,
-                        menuItemContainer.getPreferredSize().height + item.getPreferredSize().height + 1
-                ));
-                
-                menuItemContainer.add(item);
-            }
-            else {
-                menuItemContainer.add(item);
-            }
-
+            menuItemContainer.add(item);
+            
             posY += item.getPreferredSize().height + gap;
         }
     }
-    
-    private int getRowHeight() {
-        int height = 0;
-        
-        for(int i=0; i<foodItems.size(); i++) 
-            height += foodItems.get(i).getPreferredSize().height;
-            
-        return height;
-    }
-    
-    //i-update and menu
-    public void updateMenu() {
-        menuItemContainer.removeAll(); //tangalon tanan menu sa container
-        menuItemContainer.setPreferredSize(new Dimension(menuItemContainer.getPreferredSize().width, defaultMenuHeight));
-        posY = 0; //back to zero ang position
-        
-        addItemToMenuContainer(); // i readd tanan items sa menu
-    }
-    
-    
     
     ///////////////////// DONT MIND THIS    ///////////////////////
     
@@ -637,7 +599,6 @@ public class MainUI extends javax.swing.JFrame {
             if(choice == 0) {
                 deleteData();
                 tableModel.removeRow(itemTable.getSelectedRow());
-                this.updateMenu();
             }
         }
         else {

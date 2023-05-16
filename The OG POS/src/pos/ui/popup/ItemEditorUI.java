@@ -14,7 +14,6 @@ public class ItemEditorUI extends javax.swing.JFrame {
 
     private Color selectedColor;
     private int selectedRow;
-    private MainUI main;
     //objects use for connecting and interacting with the DataBase
     Connection con;
     PreparedStatement ps;
@@ -27,13 +26,12 @@ public class ItemEditorUI extends javax.swing.JFrame {
         initComponents();
         
         functionBtn.setText(function);
-        initialize(itemTable, main);
+        initialize(itemTable);
         
         connect();
     }
     
-    private void initialize(JTable itemTable, MainUI main) {
-        this.main = main;
+    private void initialize(JTable itemTable) {
         this.itemTable = itemTable;
         this.tableModel = (DefaultTableModel) this.itemTable.getModel();
         
@@ -290,9 +288,6 @@ public class ItemEditorUI extends javax.swing.JFrame {
             }
             
             tableModel.addRow(newRow);
-            
-            //i update ang menu sa MainUI
-            main.updateMenu();
         }
         else if(functionBtn.getText().equalsIgnoreCase("UPDATE")) {
             String type = foodTypeComboBox.getSelectedItem().toString();
@@ -305,9 +300,6 @@ public class ItemEditorUI extends javax.swing.JFrame {
             tableModel.setValueAt(type, selectedRow, 0);
             tableModel.setValueAt(name, selectedRow, 1);
             tableModel.setValueAt(price, selectedRow, 2);
-            
-            //i update ang menu sa MainUI
-            main.updateMenu();
         }
         
         setVisible(false); //closes item editor
